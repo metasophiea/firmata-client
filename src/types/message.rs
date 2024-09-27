@@ -1,5 +1,5 @@
 /// Received Firmata message
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Message {
     ProtocolVersion,
     Analog,

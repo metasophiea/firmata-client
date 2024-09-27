@@ -5,25 +5,28 @@ use serialport::*;
 fn main() {
     tracing_subscriber::fmt::init();
 
-    let port = serialport::new("/dev/tty.usbmodem14201", 57_600)
-        .data_bits(DataBits::Eight)
-        .parity(Parity::None)
-        .stop_bits(StopBits::One)
-        .flow_control(FlowControl::None)
-        .timeout(Duration::from_millis(10000))
-        .open()
-        .expect("an opened serial port");
+	let serial_port_builder = serialport::new("/dev/tty.usbmodem14201", 57_600)
+		.data_bits(DataBits::Eight)
+		.parity(Parity::None)
+		.stop_bits(StopBits::One)
+		.flow_control(FlowControl::None);
 
-    let mut b = firmata_client_rs::Board::new(Box::new(port)).expect("new board");
+    let mut board = firmata_client_rs::Board::new(serial_port_builder);
+	while !board.is_ready() {
+		board.poll().expect("successful polling");
+		println!("waiting...");
+        thread::sleep(Duration::from_millis(100));
+	}
+	println!("setup complete");
 
-    b.set_pin_mode(13, firmata_client_rs::PIN_MODE_OUTPUT)
-        .expect("pin mode set");
+    board.set_pin_mode(13, firmata_client_rs::PIN_MODE_OUTPUT).expect("pin mode set");
 
     let mut i = 0;
 
     loop {
         thread::sleep(Duration::from_millis(400));
-        b.digital_write(13, i).expect("digital write");
+		println!(">> {i}");
+        board.digital_write(13, i).expect("digital write");
         i ^= 1;
     }
 }

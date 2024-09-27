@@ -1,9 +1,8 @@
 #![allow(clippy::cast_possible_truncation)]
 
-use std::io::{Read, Write};
+use serialport::SerialPortBuilder;
 
-use snafu::prelude::*;
-
+use crate::ConnectionWrapper;
 use crate::constants::{
     ANALOG_MAPPING_QUERY,
     ANALOG_MESSAGE,
@@ -26,80 +25,80 @@ use crate::types::{
     I2CReply,
     Pin,
     Result,
-    StdIoSnafu
 };
 
 /// A Firmata board representation.
 // definition
 	#[derive(Debug)]
-	pub struct Board<T: Read + Write + std::fmt::Debug> {
-		pub connection: Box<T>,
-		pub pins: Vec<Pin>,
-		pub i2c_data: Vec<I2CReply>,
-		pub protocol_version: String,
-		pub firmware_name: String,
-		pub firmware_version: String,
+	pub struct Board {
+		connection_wrapper: ConnectionWrapper,
+		buffer: Vec<u8>,
+		initial_messages_sent: bool,
+
+		firmware_name: Option<String>,
+		firmware_version: Option<String>,
+		protocol_version: Option<String>,
+		pins: Vec<Pin>,
+		i2c_data: Vec<I2CReply>,
 	}
 
 // creation
-	impl<T: Read + Write + std::fmt::Debug> Board<T> {
-		#[tracing::instrument(err, ret(Display))]
-		pub fn new(connection: Box<T>) -> Result<Board<T>> {
-			let mut board = Board {
-				connection,
-				firmware_name: String::new(),
-				firmware_version: String::new(),
-				protocol_version: String::new(),
+	impl Board {
+		#[must_use]
+		pub fn new(serial_port_builder: SerialPortBuilder) -> Board {
+			Board {
+				connection_wrapper: ConnectionWrapper::new(serial_port_builder),
+				buffer: vec![],
+				initial_messages_sent: false,
+
+				firmware_name: None,
+				firmware_version: None,
+				protocol_version: None,
 				pins: vec![],
 				i2c_data: vec![],
-			};
-
-			board.report_firmware()?;
-			board.poll()?;
-
-			board.query_capabilities()?;
-			board.poll()?;
-
-			board.query_analog_mapping()?;
-			board.poll()?;
-			
-			board.report_digital(0, 1)?;
-			board.report_digital(1, 1)?;
-
-			Ok(board)
+			}
 		}
 	}
 
 // tools
-	impl<T: Read + Write + std::fmt::Debug> Board<T> {
+	impl Board {
 		/// Write on the internal connection.
 		#[tracing::instrument(skip(self), err, ret, level = "DEBUG")]
 		fn write_to_connection(&mut self, buf: &[u8]) -> Result<()> {
-			tracing::info!("write_to_connection(buf{buf:?})");
-			self.connection
-				.write(buf)
-				.map(|_| ())
-				.with_context(|_| StdIoSnafu)
+			self.connection_wrapper.write(buf.to_vec())?;
+			Ok(())
 		}
 	}
 
 // printing
-	impl<T: Read + Write + std::fmt::Debug> std::fmt::Display for Board<T> {
+	impl std::fmt::Display for Board  {
 		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 			write!(
 				f,
-				"Board {{ firmware={}, version={}, protocol={}, connection={:?}}}",
-				self.firmware_name, self.firmware_version, self.protocol_version, self.connection
+				"Board {{ firmware={:?}, version={:?}, protocol={:?}, connection_wrapper={:?}}}",
+				self.firmware_name, self.firmware_version, self.protocol_version, self.connection_wrapper
 			)
 		}
 	}
 
 // get
-	impl<T: Read + Write + std::fmt::Debug> Board<T> {
+	impl Board {
 		#[must_use]
-		/// Get pins that the board has access to.
-		pub fn get_pins(&self) -> &Vec<Pin> {
+		/// Check if the connection to the board has been successfully established
+		pub fn is_ready(&self) -> bool {
+			self.initial_messages_sent && !self.pins.is_empty()
+		}
+
+		#[must_use]
+		/// Get all pins that the board has access to.
+		pub fn get_all_pins(&self) -> &Vec<Pin> {
 			&self.pins
+		}
+
+		#[must_use]
+		/// Get a pin from the board.
+		pub fn get_pin(&self, pin:usize) -> Option<&Pin> {
+			self.pins.get(pin)
 		}
 
 		#[must_use]
@@ -110,25 +109,25 @@ use crate::types::{
 
 		#[must_use]
 		/// Get the current Firmata protocol version.
-		pub fn get_protocol_version(&self) -> &String {
-			&self.protocol_version
+		pub fn get_protocol_version(&self) -> Option<&String> {
+			self.protocol_version.as_ref()
 		}
 
 		#[must_use]
 		/// Get the firmware name.
-		pub fn get_firmware_name(&self) -> &String {
-			&self.firmware_name
+		pub fn get_firmware_name(&self) -> Option<&String> {
+			self.firmware_name.as_ref()
 		}
 
 		#[must_use]
 		/// Get the firmware version.
-		pub fn get_firmware_version(&self) -> &String {
-			&self.firmware_version
+		pub fn get_firmware_version(&self) -> Option<&String> {
+			self.firmware_version.as_ref()
 		}
 	}
 
 // set
-	impl<T: Read + Write + std::fmt::Debug> Board<T> {
+	impl Board {
 		/// Set the `mode` of the specified `pin`.
 		#[tracing::instrument(skip(self), err, ret, level = "DEBUG")]
 		pub fn set_pin_mode(&mut self, pin: u8, mode: u8) -> Result<()> {
@@ -143,7 +142,7 @@ use crate::types::{
 	}
 
 // query
-	impl<T: Read + Write + std::fmt::Debug> Board<T> {
+	impl Board {
 		/// Query the board for available analog pins.
 		#[tracing::instrument(skip(self), err, ret, level = "DEBUG")]
 		pub fn query_analog_mapping(&mut self) -> Result<()> {
@@ -158,7 +157,7 @@ use crate::types::{
 	}
 	
 // i2c
-	impl<T: Read + Write + std::fmt::Debug> Board<T> {
+	impl Board {
 		/// Configure the `delay` in microseconds for I2C devices that require a delay between when the
 		/// register is written to and the data in that register can be read.
 		#[tracing::instrument(skip(self), err, ret, level = "DEBUG")]
@@ -208,7 +207,7 @@ use crate::types::{
 	}
 
 // report
-	impl<T: Read + Write + std::fmt::Debug> Board<T> {
+	impl Board {
 		/// Query the board for current firmware and protocol information.
 		#[tracing::instrument(skip(self), err, ret, level = "DEBUG")]
 		pub fn report_firmware(&mut self) -> Result<()> {
@@ -230,7 +229,7 @@ use crate::types::{
 	}
 
 // write
-	impl<T: Read + Write + std::fmt::Debug> Board<T> {
+	impl Board {
 		/// Write `level` to the analog `pin`.
 		#[tracing::instrument(skip(self), err, ret, level = "DEBUG")]
 		pub fn analog_write(&mut self, pin: u8, level: u8) -> Result<()> {

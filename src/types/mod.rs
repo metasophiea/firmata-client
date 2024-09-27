@@ -4,12 +4,7 @@ mod message;
 mod pin;
 mod result;
 
-pub use error::{
-    Error,
-    StdIoSnafu,
-    MessageTooShortSnafu,
-    Utf8Snafu
-};
+pub use error::Error;
 pub use i2c_reply::I2CReply;
 pub use message::Message;
 pub use pin::Pin;

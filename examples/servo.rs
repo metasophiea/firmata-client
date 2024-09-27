@@ -5,16 +5,13 @@ use serialport::*;
 fn main() {
     tracing_subscriber::fmt::init();
 
-    let port = serialport::new("/dev/ttyACM0", 57_600)
-        .data_bits(DataBits::Eight)
-        .parity(Parity::None)
-        .stop_bits(StopBits::One)
-        .flow_control(FlowControl::None)
-        .timeout(Duration::from_millis(1000))
-        .open()
-        .expect("an opened serial port");
+	let serial_port_builder = serialport::new("/dev/tty.usbmodem14201", 57_600)
+		.data_bits(DataBits::Eight)
+		.parity(Parity::None)
+		.stop_bits(StopBits::One)
+		.flow_control(FlowControl::None);
 
-    let mut b = firmata_client_rs::Board::new(Box::new(port)).expect("new board");
+    let mut b = firmata_client_rs::Board::new(serial_port_builder);
 
     let pin = 3;
 

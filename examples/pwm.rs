@@ -3,32 +3,33 @@ use std::{thread, time::Duration};
 use serialport::*;
 
 fn main() {
-    tracing_subscriber::fmt::init();
+	let serial_port_builder = serialport::new("/dev/tty.usbmodem14201", 57_600)
+		.data_bits(DataBits::Eight)
+		.parity(Parity::None)
+		.stop_bits(StopBits::One)
+		.flow_control(FlowControl::None);
 
-    let port = serialport::new("/dev/ttyACM0", 57_600)
-        .data_bits(DataBits::Eight)
-        .parity(Parity::None)
-        .stop_bits(StopBits::One)
-        .flow_control(FlowControl::None)
-        .timeout(Duration::from_millis(1000))
-        .open()
-        .expect("an opened serial port");
+    let mut board = firmata_client_rs::Board::new(serial_port_builder);
 
-    let mut b = firmata_client_rs::Board::new(Box::new(port)).expect("new board");
+	while !board.is_ready() {
+		board.poll().expect("successful polling");
+		println!("waiting...");
+        thread::sleep(Duration::from_millis(100));
+	}
+	println!("setup complete");
 
-    let pin = 3;
+    let pin = 5;
 
-    b.set_pin_mode(pin, firmata_client_rs::PIN_MODE_PWM)
-        .expect("pin set");
-    b.analog_write(pin, 0).expect("pin write");
+    board.set_pin_mode(pin, firmata_client_rs::PIN_MODE_PWM).expect("pin set");
+    board.analog_write(pin, 0).expect("pin write");
 
-    tracing::info!("Starting loop...");
+    println!("Starting loop...");
 
     loop {
         for value in (0..255).step_by(5) {
-            b.analog_write(pin, value).expect("pin write");
-            tracing::info!("{}", value);
-            thread::sleep(Duration::from_millis(500));
+            board.analog_write(pin, value).expect("pin write");
+            println!(">> {}", value);
+            thread::sleep(Duration::from_millis(100));
         }
     }
 }

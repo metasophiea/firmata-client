@@ -1,6 +1,8 @@
 mod constants;
 mod types;
 
+pub use types::Error;
+
 pub use constants::{
 	PIN_MODE_ANALOG,
 	PIN_MODE_ENCODER,
@@ -16,6 +18,9 @@ pub use constants::{
 	PIN_MODE_SHIFT,
 	PIN_MODE_STEPPER
 };
+
+mod connection_wrapper;
+use connection_wrapper::ConnectionWrapper;
 
 mod board;
 pub use board::Board;
