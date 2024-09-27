@@ -1,7 +1,10 @@
 mod constants;
 mod types;
 
-pub use types::Error;
+pub use types::{
+	Error,
+	Message
+};
 
 pub use constants::{
 	PIN_MODE_ANALOG,

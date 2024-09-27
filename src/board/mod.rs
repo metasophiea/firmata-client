@@ -248,12 +248,12 @@ use crate::types::{
 
     	/// Write `level` to the digital `pin`.
 		#[tracing::instrument(skip(self), err, ret, level = "DEBUG")]
-		pub fn digital_write(&mut self, pin: u8, level: u8) -> Result<()> {
+		pub fn digital_write(&mut self, pin: u8, level: bool) -> Result<()> {
 			let port = (pin/8) as usize;
 			let mut value = 0;
 
 			if let Some(pin) = self.pins.get_mut(pin as usize) {
-				pin.value = level;
+				pin.value = if level { 1 } else { 0 };
 			} else {
 				return Err(Error::PinOutOfBounds { pin, len: self.pins.len() })
 			}

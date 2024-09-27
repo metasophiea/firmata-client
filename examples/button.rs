@@ -5,7 +5,7 @@ use serialport::*;
 fn main() {
     tracing_subscriber::fmt::init();
 
-	let serial_port_builder = serialport::new("/dev/tty.usbmodem14201", 57_600)
+	let serial_port_builder = serialport::new("/dev/tty.usbmodem14301", 57_600)
 		.data_bits(DataBits::Eight)
 		.parity(Parity::None)
 		.stop_bits(StopBits::One)
@@ -30,14 +30,22 @@ fn main() {
     println!("Starting loop...");
 
     loop {
-        board.poll().expect("a message");
-        if board.get_pin(button as usize).expect("pin").value == 0 {
-            println!("off");
-			board.digital_write(5, 0).expect("digital write");
-        } else {
-            println!("on");
-			board.digital_write(5, 1).expect("digital write");
-        }
+        board.poll()
+            .expect("successful polling")
+            .iter()
+            .filter_map(|message| message.try_as_digital())
+            .flatten()
+            .for_each(|(pin_index, value)|{
+                if pin_index == &button {
+                    if *value {
+                        println!("on");
+                        board.digital_write(led, true).expect("digital write");
+                    } else {
+                        println!("off");
+                        board.digital_write(led, false).expect("digital write");
+                    }
+                }
+            });
 
         thread::sleep(Duration::from_millis(1));
     }

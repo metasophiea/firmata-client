@@ -3,7 +3,7 @@ use std::{thread, time::Duration};
 use serialport::*;
 
 fn main() {
-	let serial_port_builder = serialport::new("/dev/tty.usbmodem14201", 57_600)
+	let serial_port_builder = serialport::new("/dev/tty.usbmodem14301", 57_600)
 		.data_bits(DataBits::Eight)
 		.parity(Parity::None)
 		.stop_bits(StopBits::One)
@@ -18,14 +18,26 @@ fn main() {
 	}
 	println!("setup complete");
 
+    let led = 5;
     let pin = 14; // A0
 
+    board.set_pin_mode(led, firmata_client_rs::PIN_MODE_PWM).expect("pin mode set");
     board.set_pin_mode(pin, firmata_client_rs::PIN_MODE_ANALOG).expect("pin mode set");
     board.report_analog(pin, 1).expect("reporting state");
 
     loop {
-        board.poll().expect("successful polling");
-        println!("analog value: {}", board.get_pin(pin as usize).expect("pin").value);
-        thread::sleep(Duration::from_millis(10));
+        board.poll()
+            .expect("successful polling")
+            .iter()
+            .filter_map(|message| message.try_as_analog())
+            .flatten()
+            .for_each(|(pin_index, value)|{
+                println!("analog pin {pin_index} value: {value}");
+                if pin_index == &pin {
+                    board.analog_write(led, *value).expect("digital write");
+                }
+            });
+
+        thread::sleep(Duration::from_millis(1));
     }
 }

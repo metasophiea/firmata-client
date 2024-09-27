@@ -56,7 +56,7 @@ impl Board {
 	
 					self.protocol_version = Some(format!("{byte_1:o}.{byte_2:o}"));
 					tracing::debug!("self.protocol_version: {}", format!("{byte_1:o}.{byte_2:o}"));
-					messages.push(Message::ProtocolVersion);
+					messages.push(Message::ProtocolVersion(*byte_1, *byte_2));
 
 					self.buffer.drain(0..=2);
 				},
@@ -67,17 +67,21 @@ impl Board {
 					let Some(byte_2) = self.buffer.get(2) else { break; };
 	
 					// extract pin info
-						let pin = (byte_0 & 0x0F) + 14;
+						let pin_index = (byte_0 & 0x0F) + 14;
 						let value = byte_1 | (byte_2 << 7);
 	
 					// channel info into local data
-						if let Some(pin) = self.pins.get_mut(pin as usize) {
+						let mut pin_updates:Vec<(u8, u8)> = vec![];
+						if let Some(pin) = self.pins.get_mut(pin_index as usize) {
+							if pin.value != value {
+								pin_updates.push((pin_index, value));
+							}
 							pin.value = value;
 						} else {
-							return Err(Error::PinOutOfBounds { pin, len: self.pins.len() })
+							return Err(Error::PinOutOfBounds { pin: pin_index, len: self.pins.len() })
 						}
 	
-					messages.push(Message::Analog);
+					messages.push(Message::Analog(pin_updates));
 
 					self.buffer.drain(0..=2);
 				},
@@ -93,20 +97,25 @@ impl Board {
 						tracing::debug!("port: {port} value: {value}");
 	
 					// channel info into local data
-						for i in 0..8 {
-							let pin_index = (8 * (port as usize)) + i;
-							let pins_length = self.pins.len();
+						let mut pin_updates:Vec<(u8, bool)> = vec![];
+
+						for index in 0..8 as u8 {
+							let pin_index = (8 * port) + index;
 							
-							if let Some(pin) = self.pins.get_mut(pin_index) {
-								if pins_length > pin_index && pin.mode == PIN_MODE_INPUT {
-									pin.value = (value >> (i & 0x07)) & 0x01;
+							if let Some(pin) = self.pins.get_mut(pin_index as usize) {
+								if pin.mode == PIN_MODE_INPUT {
+									let new_value = (value >> (index & 0x07)) & 0x01;
+									if new_value != pin.value {
+										pin_updates.push((pin_index, new_value != 0));
+									}
+									pin.value = new_value;
 								}
 							} else {
-								break;
+								return Err(Error::PinOutOfBounds { pin: pin_index, len: self.pins.len() })
 							}
 						}
 					
-						messages.push(Message::Digital);
+						messages.push(Message::Digital(pin_updates));
 						self.buffer.drain(0..=2);
 				}
 				START_SYSEX => {
@@ -122,7 +131,6 @@ impl Board {
 						END_SYSEX => {
 							tracing::debug!("END_SYSEX");
 							messages.push(Message::EmptyResponse);
-							self.buffer.remove(0);
 						},
 						ANALOG_MAPPING_RESPONSE => {
 							tracing::debug!("ANALOG_MAPPING_RESPONSE");
@@ -143,7 +151,6 @@ impl Board {
 							}
 
 							messages.push(Message::AnalogMappingResponse);
-							self.buffer.drain(0..sysex_buffer.len());
 						},
 						CAPABILITY_RESPONSE => {
 							tracing::debug!("CAPABILITY_RESPONSE");
@@ -179,7 +186,6 @@ impl Board {
 							}
 
 							messages.push(Message::CapabilityResponse);
-							self.buffer.drain(0..sysex_buffer.len());
 						},
 						REPORT_FIRMWARE => {
 							tracing::debug!("REPORT_FIRMWARE");
@@ -193,11 +199,9 @@ impl Board {
 							if sysex_buffer.len() - 1 > 4 {
 								let name = std::str::from_utf8(&sysex_buffer[4..sysex_buffer.len() - 1])?.to_string();
 								tracing::debug!("firmware_name: {name}");
+								messages.push(Message::ReportFirmware(name.clone()));
 								self.firmware_name = Some(name);
 							}
-
-							messages.push(Message::ReportFirmware);
-							self.buffer.drain(0..sysex_buffer.len());
 						},
 						I2C_REPLY => {
 							tracing::debug!("I2C_REPLY");
@@ -234,7 +238,6 @@ impl Board {
 							self.i2c_data.push(reply);
 
 							messages.push(Message::I2CReply);
-							self.buffer.drain(0..sysex_buffer.len());
 						},
 						PIN_STATE_RESPONSE => {
 							tracing::debug!("PIN_STATE_RESPONSE");
@@ -259,13 +262,14 @@ impl Board {
 							pin.value = *byte_4;
 
 							messages.push(Message::PinStateResponse);
-							self.buffer.drain(0..sysex_buffer.len());
 						},
 						_ => {
 							tracing::debug!("UnknownSysEx");
 							return Err(Error::UnknownSysEx { code: *byte_1 });
 						},
 					}
+
+					self.buffer.drain(0..sysex_buffer.len());
 				},
 				_ => { return Err(Error::BadByte(self.buffer[0])); },
 			}
