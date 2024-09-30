@@ -19,14 +19,15 @@ fn main() {
 	}
 	println!("setup complete");
 
-    board.set_pin_mode(13, firmata_client_rs::PIN_MODE_OUTPUT).expect("pin mode set");
+	let pin = 15;
+    board.set_pin_mode(pin, firmata_client_rs::PIN_MODE_OUTPUT).expect("pin mode set");
 
     let mut state = false;
 
     loop {
-        thread::sleep(Duration::from_millis(400));
+        thread::sleep(Duration::from_millis(1000));
 		println!(">> {state}");
-        board.digital_write(13, state).expect("digital write");
+        board.digital_write(pin, state).expect("digital write");
         state = !state;
     }
 }

@@ -250,14 +250,14 @@ use crate::types::{
 		#[tracing::instrument(skip(self), err, ret, level = "DEBUG")]
 		pub fn digital_write(&mut self, pin: u8, level: bool) -> Result<()> {
 			let port = (pin/8) as usize;
-			let mut value = 0;
-
+			
 			if let Some(pin) = self.pins.get_mut(pin as usize) {
 				pin.value = if level { 1 } else { 0 };
 			} else {
 				return Err(Error::PinOutOfBounds { pin, len: self.pins.len() })
 			}
 
+			let mut value = 0;
 			for index in 0..8 {
 				if let Some(pin) = self.pins.get(8 * port + index) {
 					if pin.value != 0 {
@@ -271,7 +271,7 @@ use crate::types::{
 			self.write_to_connection(&[
 				DIGITAL_MESSAGE | port as u8,
 				value & SYSEX_REALTIME,
-				(u16::from(level) >> 7) as u8 & SYSEX_REALTIME,
+				(u16::from(value) >> 7) as u8 & SYSEX_REALTIME,
 			])
 		}
 	}
