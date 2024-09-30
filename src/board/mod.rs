@@ -252,7 +252,7 @@ use crate::types::{
 			let port = (pin/8) as usize;
 			
 			if let Some(pin) = self.pins.get_mut(pin as usize) {
-				pin.value = if level { 1 } else { 0 };
+				pin.value = u8::from(level);
 			} else {
 				return Err(Error::PinOutOfBounds { pin, len: self.pins.len() })
 			}

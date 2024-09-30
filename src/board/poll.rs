@@ -99,7 +99,7 @@ impl Board {
 					// channel info into local data
 						let mut pin_updates:Vec<(u8, bool)> = vec![];
 
-						for index in 0..8 as u8 {
+						for index in 0..8u8 {
 							let pin_index = (8 * port) + index;
 							
 							if let Some(pin) = self.pins.get_mut(pin_index as usize) {

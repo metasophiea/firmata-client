@@ -13,6 +13,7 @@ pub enum Message {
 }
 
 impl Message {
+    #[must_use]
     pub fn try_as_analog(&self) -> Option<&Vec<(u8, u8)>> {
         if let Message::Analog(data) = self {
             Some(data)
@@ -20,6 +21,7 @@ impl Message {
             None
         }
     }
+    #[must_use]
     pub fn try_as_digital(&self) -> Option<&Vec<(u8, bool)>> {
         if let Message::Digital(data) = self {
             Some(data)
