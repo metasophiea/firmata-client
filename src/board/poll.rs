@@ -164,7 +164,7 @@ impl Board {
 							let mut modes = vec![];
 							let mut resolution = None;
 
-							while index < sysex_buffer.len() - 2 {
+							while index < sysex_buffer.len() - 1 {
 								// Completed a pin, push and continue.
 								if sysex_buffer[index] == 127u8 {
 									self.pins.push(Pin {
