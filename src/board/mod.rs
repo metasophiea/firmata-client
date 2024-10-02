@@ -134,7 +134,7 @@ use crate::types::{
 			if let Some(pin) = self.pins.get_mut(pin as usize) {
 				pin.modes = vec![mode];
 			} else {
-				return Err(Error::PinOutOfBounds { pin, len: self.pins.len() })
+				return Err(Error::PinOutOfBounds { pin, len: self.pins.len(), source: "set_pin_mode".to_string() })
 			}
 
 			self.write_to_connection(&[SET_PIN_MODE, pin, mode])
@@ -236,7 +236,7 @@ use crate::types::{
 			if let Some(pin) = self.pins.get_mut(pin as usize) {
 				pin.value = level;
 			} else {
-				return Err(Error::PinOutOfBounds { pin, len: self.pins.len() })
+				return Err(Error::PinOutOfBounds { pin, len: self.pins.len(), source: "analog_write".to_string() })
 			}
 
 			self.write_to_connection(&[
@@ -254,7 +254,7 @@ use crate::types::{
 			if let Some(pin) = self.pins.get_mut(pin as usize) {
 				pin.value = u8::from(level);
 			} else {
-				return Err(Error::PinOutOfBounds { pin, len: self.pins.len() })
+				return Err(Error::PinOutOfBounds { pin, len: self.pins.len(), source: "digital_write".to_string() })
 			}
 
 			let mut value = 0;

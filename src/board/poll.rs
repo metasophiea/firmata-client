@@ -77,8 +77,6 @@ impl Board {
 								pin_updates.push((pin_index, value));
 							}
 							pin.value = value;
-						} else {
-							return Err(Error::PinOutOfBounds { pin: pin_index, len: self.pins.len() })
 						}
 	
 					messages.push(Message::Analog(pin_updates));
@@ -88,8 +86,8 @@ impl Board {
 				DIGITAL_MESSAGE..=DIGITAL_MESSAGE_BOUND => {
 					tracing::debug!("DIGITAL_MESSAGE");
 	
-					let Some(byte_1) = self.buffer.get(1) else { break; };
-					let Some(byte_2) = self.buffer.get(2) else { break; };
+					let Some(byte_1) = self.buffer.get(1) else { tracing::debug!("byte_1 missing"); break; };
+					let Some(byte_2) = self.buffer.get(2) else { tracing::debug!("byte_2 missing"); break; };
 	
 					// extract pin info
 						let port = byte_0 & 0x0F;
@@ -110,8 +108,6 @@ impl Board {
 									}
 									pin.value = new_value;
 								}
-							} else {
-								return Err(Error::PinOutOfBounds { pin: pin_index, len: self.pins.len() })
 							}
 						}
 					
@@ -252,7 +248,7 @@ impl Board {
 
 							let pin = *byte_2;
 							let Some(pin) = self.pins.get_mut(pin as usize) else {
-								return Err(Error::PinOutOfBounds { pin, len: self.pins.len() })
+								return Err(Error::PinOutOfBounds { pin, len: self.pins.len(), source: "poll : PIN_STATE_RESPONSE".to_string() })
 							};
 
 							pin.modes = vec![*byte_3];

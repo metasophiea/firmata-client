@@ -18,7 +18,7 @@ pub enum Error {
 	/// Mpsc `SendError`
 	MpscSend(SendError<Vec<u8>>),
     /// Pin out of bounds
-    PinOutOfBounds { pin: u8, len: usize },
+    PinOutOfBounds { pin: u8, len: usize, source: String },
     /// Serialport Error
 	Serialport(SerialPortError)
 }
@@ -32,7 +32,7 @@ impl std::fmt::Display for Error  {
 			Error::StdIo(error) => write!(f, "I/O error: {error}"),
 			Error::Utf8(error) => write!(f, "UTF8 error: {error}"),
 			Error::MpscSend(error) => write!(f, "Mpsc SendError error: {error}"),
-			Error::PinOutOfBounds { pin, len } => write!(f, "Pin out of bounds: {pin} ({len})"),
+			Error::PinOutOfBounds { pin, len, source } => write!(f, "Pin out of bounds: {pin} ({len}) source: {source}"),
 			Error::Serialport(error) => write!(f, "Serialport Error: {error}"),
 		}
 	}
