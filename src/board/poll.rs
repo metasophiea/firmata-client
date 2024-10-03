@@ -80,7 +80,9 @@ impl Board {
 							pin.value = value;
 						}
 	
-					messages.push(Message::Analog(pin_updates));
+					if !pin_updates.is_empty() {
+						messages.push(Message::Analog(pin_updates));
+					}
 
 					self.buffer.drain(0..=2);
 				},
@@ -112,7 +114,10 @@ impl Board {
 							}
 						}
 					
-						messages.push(Message::Digital(pin_updates));
+						if !pin_updates.is_empty() {
+							messages.push(Message::Digital(pin_updates));
+						}
+						
 						self.buffer.drain(0..=2);
 				}
 				START_SYSEX => {
