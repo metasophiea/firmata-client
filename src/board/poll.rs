@@ -12,6 +12,7 @@ use crate::constants::{
     I2C_REPLY,
     PIN_MODE_ANALOG,
     PIN_MODE_INPUT,
+	PIN_MODE_PULLUP,
     PIN_STATE_RESPONSE,
     REPORT_FIRMWARE,
     REPORT_VERSION,
@@ -101,7 +102,7 @@ impl Board {
 							let pin_index = (8 * port) + index;
 							
 							if let Some(pin) = self.pins.get_mut(pin_index as usize) {
-								if pin.mode == PIN_MODE_INPUT {
+								if pin.mode == PIN_MODE_INPUT || pin.mode == PIN_MODE_PULLUP {
 									let new_value = (value >> (index & 0x07)) & 0x01;
 									if new_value != pin.value {
 										pin_updates.push((pin_index, new_value != 0));
@@ -140,7 +141,6 @@ impl Board {
 								if sysex_buffer.get(i) != Some(&127u8) {
 									let pin = &mut self.pins[i - 2];
 									pin.mode = PIN_MODE_ANALOG;
-									pin.modes = vec![PIN_MODE_ANALOG];
 									pin.resolution = DEFAULT_ANALOG_RESOLUTION;
 								}
 								i += 1;
@@ -169,6 +169,7 @@ impl Board {
 										resolution: resolution.take().expect("pin resolution"),
 										value: 0,
 									});
+									tracing::debug!("pin: {} {:?}", self.pins.len()-1, self.pins[self.pins.len()-1]);
 
 									index += 1;
 								} else {
@@ -251,7 +252,7 @@ impl Board {
 								return Err(Error::PinOutOfBounds { pin, len: self.pins.len(), source: "poll : PIN_STATE_RESPONSE".to_string() })
 							};
 
-							pin.modes = vec![*byte_3];
+							pin.mode = *byte_3;
 
 							// TODO: Extended values.
 							let Some(byte_4) = sysex_buffer.get(4) else { break; };

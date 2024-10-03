@@ -130,14 +130,19 @@ use crate::types::{
 	impl Board {
 		/// Set the `mode` of the specified `pin`.
 		#[tracing::instrument(skip(self), err, ret, level = "DEBUG")]
-		pub fn set_pin_mode(&mut self, pin: u8, mode: u8) -> Result<()> {
-			if let Some(pin) = self.pins.get_mut(pin as usize) {
-				pin.modes = vec![mode];
+		pub fn set_pin_mode(&mut self, pin_index: u8, mode: u8) -> Result<()> {
+			if let Some(pin) = self.pins.get_mut(pin_index as usize) {
+
+				if !pin.modes.contains(&mode) {
+					return Err(Error::InvalidPinMode { pin:pin_index, modes:pin.modes.clone() });
+				}
+
+				pin.mode = mode;
 			} else {
-				return Err(Error::PinOutOfBounds { pin, len: self.pins.len(), source: "set_pin_mode".to_string() })
+				return Err(Error::PinOutOfBounds { pin:pin_index, len: self.pins.len(), source: "set_pin_mode".to_string() })
 			}
 
-			self.write_to_connection(&[SET_PIN_MODE, pin, mode])
+			self.write_to_connection(&[SET_PIN_MODE, pin_index, mode])
 		}
 	}
 

@@ -17,6 +17,8 @@ pub enum Error {
     Utf8(std::str::Utf8Error),
 	/// Mpsc `SendError`
 	MpscSend(SendError<Vec<u8>>),
+	/// Invalid Pin Mode
+	InvalidPinMode { pin: u8, modes: Vec<u8> },
     /// Pin out of bounds
     PinOutOfBounds { pin: u8, len: usize, source: String },
     /// Serialport Error
@@ -32,6 +34,7 @@ impl std::fmt::Display for Error  {
 			Error::StdIo(error) => write!(f, "I/O error: {error}"),
 			Error::Utf8(error) => write!(f, "UTF8 error: {error}"),
 			Error::MpscSend(error) => write!(f, "Mpsc SendError error: {error}"),
+			Error::InvalidPinMode { pin, modes } => write!(f, "Invalid Pin Mode: {pin} modes: {modes:?}"),
 			Error::PinOutOfBounds { pin, len, source } => write!(f, "Pin out of bounds: {pin} ({len}) source: {source}"),
 			Error::Serialport(error) => write!(f, "Serialport Error: {error}"),
 		}
