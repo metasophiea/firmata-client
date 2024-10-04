@@ -6,6 +6,8 @@ use crate::constants::{
 /// The current state and configuration of a pin.
 #[derive(Debug)]
 pub struct Pin {
+	/// Whether this is an analog pin or not.
+	pub analog: bool,
     /// Currently configured mode.
     pub mode: u8,
     /// Current resolution.
@@ -19,6 +21,7 @@ pub struct Pin {
 impl Default for Pin {
     fn default() -> Self {
         Self {
+			analog: false,
             mode: PIN_MODE_ANALOG,
             modes: vec![PIN_MODE_ANALOG],
             resolution: DEFAULT_ANALOG_RESOLUTION,

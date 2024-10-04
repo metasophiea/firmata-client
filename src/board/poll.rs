@@ -5,12 +5,11 @@ use crate::constants::{
     ANALOG_MESSAGE,
     ANALOG_MESSAGE_BOUND,
     CAPABILITY_RESPONSE,
-    DEFAULT_ANALOG_RESOLUTION,
     DIGITAL_MESSAGE,
     DIGITAL_MESSAGE_BOUND,
     END_SYSEX,
     I2C_REPLY,
-    PIN_MODE_ANALOG,
+	PIN_MODE_IGNORE,
     PIN_MODE_INPUT,
 	PIN_MODE_PULLUP,
     PIN_STATE_RESPONSE,
@@ -137,18 +136,20 @@ impl Board {
 						ANALOG_MAPPING_RESPONSE => {
 							tracing::debug!("ANALOG_MAPPING_RESPONSE");
 
-							let mut i = 2;
-
-							// Also break before pins indexing is out of bounds.
-							let upper = (sysex_buffer.len() - 1).min(self.pins.len() + 2);
-
-							while i < upper {
-								if sysex_buffer.get(i) != Some(&127u8) {
-									let pin = &mut self.pins[i - 2];
-									pin.mode = PIN_MODE_ANALOG;
-									pin.resolution = DEFAULT_ANALOG_RESOLUTION;
+							for index in 2..sysex_buffer.len() {
+								if sysex_buffer[index] == PIN_MODE_IGNORE {
+									continue;
 								}
-								i += 1;
+
+								if sysex_buffer[index] == END_SYSEX {
+									break;
+								}
+								
+								tracing::debug!("index: {index}, sysex_buffer[index]: {}, pin_index: {}", sysex_buffer[index], index-2);
+
+								if let Some(pin) = self.pins.get_mut(index - 2) {
+									pin.analog = true;
+								}
 							}
 
 							messages.push(Message::AnalogMappingResponse);
@@ -169,6 +170,7 @@ impl Board {
 								// Completed a pin, push and continue.
 								if sysex_buffer[index] == 127u8 {
 									self.pins.push(Pin {
+										analog: false,
 										mode: *modes.first().expect("pin mode"),
 										modes: std::mem::take(&mut modes),
 										resolution: resolution.take().expect("pin resolution"),
