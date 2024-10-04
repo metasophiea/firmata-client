@@ -101,10 +101,13 @@ impl Board {
 
 						for index in 0..8u8 {
 							let pin_index = (8 * port) + index;
+							tracing::debug!("pin_index: {pin_index}");
 							
 							if let Some(pin) = self.pins.get_mut(pin_index as usize) {
+								tracing::debug!("pin.mode: {}", pin.mode);
 								if pin.mode == PIN_MODE_INPUT || pin.mode == PIN_MODE_PULLUP {
 									let new_value = (value >> (index & 0x07)) & 0x01;
+									tracing::debug!("new_value: {new_value} pin.value: {}", pin.value);
 									if new_value != pin.value {
 										pin_updates.push((pin_index, new_value != 0));
 									}
