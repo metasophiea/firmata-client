@@ -10,20 +10,26 @@ pub struct Pin {
 	pub analog: bool,
     /// Currently configured mode.
     pub mode: u8,
-    /// Current resolution.
-    pub resolution: u8,
     /// All pin modes.
     pub modes: Vec<u8>,
+	/// The report analog state.
+	pub report_analog_active: bool,
+	/// The report digital state.
+	pub report_digital_active: bool,
+    /// Current resolution.
+    pub resolution: u8,
     /// Pin value.
     pub value: u8,
 }
 
-impl Default for Pin {
-    fn default() -> Self {
+impl Pin {
+    pub fn default_with_report_digital_active() -> Self {
         Self {
 			analog: false,
             mode: PIN_MODE_ANALOG,
             modes: vec![PIN_MODE_ANALOG],
+			report_analog_active: false,
+			report_digital_active: true,
             resolution: DEFAULT_ANALOG_RESOLUTION,
             value: 0,
         }

@@ -221,16 +221,68 @@ use crate::types::{
 
     	/// Set the analog reporting `state` of the specified `pin`.
 		#[tracing::instrument(skip(self), err, ret, level = "DEBUG")]
-		pub fn report_analog(&mut self, pin: u8, state: u8) -> Result<()> {
-			let port = pin / 8;
-			self.write_to_connection(&[REPORT_ANALOG | port, state])
+		pub fn report_analog(&mut self, pin: u8, state: bool) -> Result<()> {
+			// get pin
+				let p = if let Some(pin) = self.pins.get_mut(pin as usize) {
+					pin
+				} else {
+					return Err(Error::PinOutOfBounds { pin, len: self.pins.len(), source: "report_analog".to_string() })
+				};
+
+			// check this is an actual change
+				if p.report_analog_active == state {
+					return Ok(());
+				}
+
+			// update state
+				p.report_analog_active = state;
+
+			// get port
+				let port = pin / 8;
+
+			// check other pins in this port and generate OR'd state for port
+				let mut new_state = false;
+				for pin_index in 0..8 {
+					if let Some(pin) = self.pins.get(pin_index) {
+						new_state ^= pin.report_analog_active;
+					}
+				}
+
+			// send message to board
+				self.write_to_connection(&[REPORT_ANALOG | port, u8::from(new_state)])
 		}
 
     	/// Set the digital reporting `state` of the specified `pin`.
 		#[tracing::instrument(skip(self), err, ret, level = "DEBUG")]
-		pub fn report_digital(&mut self, pin: u8, state: u8) -> Result<()> {
-			let port = pin / 8;
-			self.write_to_connection(&[REPORT_DIGITAL | port, state])
+		pub fn report_digital(&mut self, pin: u8, state: bool) -> Result<()> {
+			// get pin
+				let p = if let Some(pin) = self.pins.get_mut(pin as usize) {
+					pin
+				} else {
+					return Err(Error::PinOutOfBounds { pin, len: self.pins.len(), source: "report_digital".to_string() })
+				};
+
+			// check this is an actual change
+				if p.report_digital_active == state {
+					return Ok(());
+				}
+
+			// update state
+				p.report_digital_active = state;
+
+			// get port
+				let port = pin / 8;
+
+			// check other pins in this port and generate OR'd state for port
+				let mut new_state = false;
+				for pin_index in 0..8 {
+					if let Some(pin) = self.pins.get(port as usize + pin_index) {
+						new_state |= pin.report_digital_active;
+					}
+				}
+
+			// send message to board
+				self.write_to_connection(&[REPORT_DIGITAL | port, u8::from(new_state)])
 		}
 	}
 

@@ -23,7 +23,7 @@ fn main() {
 
     board.set_pin_mode(led, firmata_client_rs::PIN_MODE_PWM).expect("pin mode set");
     board.set_pin_mode(pin, firmata_client_rs::PIN_MODE_ANALOG).expect("pin mode set");
-    board.report_analog(pin, 1).expect("reporting state");
+    board.report_analog(pin, true).expect("reporting state");
 
     loop {
         board.poll()

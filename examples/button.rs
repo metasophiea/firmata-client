@@ -5,7 +5,7 @@ use serialport::*;
 fn main() {
     tracing_subscriber::fmt::init();
 
-	let serial_port_builder = serialport::new("/dev/tty.usbmodem14301", 57_600)
+	let serial_port_builder = serialport::new("/dev/tty.usbmodem14201", 57_600)
 		.data_bits(DataBits::Eight)
 		.parity(Parity::None)
 		.stop_bits(StopBits::One)
@@ -23,7 +23,7 @@ fn main() {
     let led = 5;
     let button = 2;
 	
-    board.report_digital(button, 1).expect("digital reporting mode");
+    board.report_digital(button, true).expect("digital reporting mode");
     board.set_pin_mode(led, firmata_client_rs::PIN_MODE_OUTPUT).expect("pin mode set");
     board.set_pin_mode(button, firmata_client_rs::PIN_MODE_INPUT | firmata_client_rs::PIN_MODE_PULLUP).expect("pin mode set");
 

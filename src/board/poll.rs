@@ -13,6 +13,7 @@ use crate::constants::{
     PIN_MODE_INPUT,
 	PIN_MODE_PULLUP,
     PIN_STATE_RESPONSE,
+	REPORT_DIGITAL,
     REPORT_FIRMWARE,
     REPORT_VERSION,
     START_SYSEX
@@ -36,8 +37,7 @@ impl Board {
 			tracing::debug!("sending initial messages");
 			self.query_capabilities()?;
 			self.query_analog_mapping()?;
-			self.report_digital(0, 1)?;
-			self.report_digital(1, 1)?;
+			self.write_to_connection(&[REPORT_DIGITAL, 1])?;
 		}
 
 		self.buffer.append(&mut self.connection_wrapper.poll()?);
@@ -163,8 +163,8 @@ impl Board {
 							let mut index = 4;
 
 							self.pins = vec![];
-							self.pins.push(Pin::default()); // 0 is unused.
-							self.pins.push(Pin::default()); // 1 is unused.
+							self.pins.push(Pin::default_with_report_digital_active()); // 0 is unused.
+							self.pins.push(Pin::default_with_report_digital_active()); // 1 is unused.
 
 							let mut modes = vec![];
 							let mut resolution = None;
@@ -176,6 +176,8 @@ impl Board {
 										analog: false,
 										mode: *modes.first().expect("pin mode"),
 										modes: std::mem::take(&mut modes),
+										report_analog_active: false,
+										report_digital_active: false,
 										resolution: resolution.take().expect("pin resolution"),
 										value: 0,
 									});
