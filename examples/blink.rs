@@ -11,7 +11,7 @@ fn main() {
 		.stop_bits(StopBits::One)
 		.flow_control(FlowControl::None);
 
-    let mut board = firmata_client_rs::Board::new(serial_port_builder);
+    let mut board = firmata_client::Board::new(serial_port_builder);
 	while !board.is_ready() {
 		board.poll().expect("successful polling");
 		println!("waiting...");
@@ -20,7 +20,7 @@ fn main() {
 	println!("setup complete");
 
 	let pin = 15;
-    board.set_pin_mode(pin, firmata_client_rs::PIN_MODE_OUTPUT).expect("pin mode set");
+    board.set_pin_mode(pin, firmata_client::PIN_MODE_OUTPUT).expect("pin mode set");
 
     let mut state = false;
 

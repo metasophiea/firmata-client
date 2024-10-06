@@ -5,7 +5,7 @@
 
 // use serialport::*;
 
-// use firmata_client_rs::Board;
+// use firmata_client::Board;
 
 // fn init<T: Read + Write + std::fmt::Debug>(board: &Arc<Mutex<Board>>) {
 //     let mut b = board.lock().expect("lock");
@@ -48,7 +48,7 @@ fn main() {
 //         .expect("an opened serial port");
 
 //     let board = Arc::new(Mutex::new(
-//         firmata_client_rs::Board::new(serial_port_builder).expect("new board"),
+//         firmata_client::Board::new(serial_port_builder).expect("new board"),
 //     ));
 
 //     {

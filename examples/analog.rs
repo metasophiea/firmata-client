@@ -9,7 +9,7 @@ fn main() {
 		.stop_bits(StopBits::One)
 		.flow_control(FlowControl::None);
 
-    let mut board = firmata_client_rs::Board::new(serial_port_builder);
+    let mut board = firmata_client::Board::new(serial_port_builder);
 
 	while !board.is_ready() {
 		board.poll().expect("successful polling");
@@ -21,8 +21,8 @@ fn main() {
     let led = 5;
     let pin = 14; // A0
 
-    board.set_pin_mode(led, firmata_client_rs::PIN_MODE_PWM).expect("pin mode set");
-    board.set_pin_mode(pin, firmata_client_rs::PIN_MODE_ANALOG).expect("pin mode set");
+    board.set_pin_mode(led, firmata_client::PIN_MODE_PWM).expect("pin mode set");
+    board.set_pin_mode(pin, firmata_client::PIN_MODE_ANALOG).expect("pin mode set");
     board.report_analog(pin, true).expect("reporting state");
 
     loop {

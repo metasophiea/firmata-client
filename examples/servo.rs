@@ -11,11 +11,11 @@ fn main() {
 		.stop_bits(StopBits::One)
 		.flow_control(FlowControl::None);
 
-    let mut b = firmata_client_rs::Board::new(serial_port_builder);
+    let mut b = firmata_client::Board::new(serial_port_builder);
 
     let pin = 3;
 
-    b.set_pin_mode(pin, firmata_client_rs::PIN_MODE_SERVO)
+    b.set_pin_mode(pin, firmata_client::PIN_MODE_SERVO)
         .expect("pin mode set");
 
     tracing::info!("Starting loop...");
