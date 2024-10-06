@@ -25,6 +25,16 @@ pub enum Error {
 	Serialport(SerialPortError)
 }
 
+impl Error {
+	pub fn is_disconnected(&self) -> bool {
+		if let Error::Disconnected = self {
+			true
+		} else {
+			false
+		}
+	}
+}
+
 impl std::fmt::Display for Error  {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
