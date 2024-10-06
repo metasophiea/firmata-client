@@ -1,11 +1,11 @@
-use std::io::{Error as IOError, Read};
+use std::io::Read;
 
 use serialport::{
 	SerialPort,
 	SerialPortBuilder
 };
 
-use crate::types::Result;
+use crate::types::{Error, Result};
 
 pub struct Engine {
 	//loop control
@@ -14,7 +14,7 @@ pub struct Engine {
     //communication
 		receiver: std::sync::mpsc::Receiver<Vec<u8>>,
 		sender: std::sync::mpsc::Sender<Vec<u8>>,
-		error_sender: std::sync::mpsc::Sender<IOError>,
+		error_sender: std::sync::mpsc::Sender<Error>,
 
 	//connection
 		connection: Box<dyn SerialPort>,
@@ -24,7 +24,7 @@ impl Engine {
 	pub fn new(
 		receiver: std::sync::mpsc::Receiver<Vec<u8>>,
 		sender: std::sync::mpsc::Sender<Vec<u8>>,
-		error_sender: std::sync::mpsc::Sender<IOError>,
+		error_sender: std::sync::mpsc::Sender<Error>,
 		serial_port_builder: SerialPortBuilder,
 	) -> Result<Engine> {
 		let connection = serial_port_builder
@@ -56,7 +56,7 @@ impl Engine {
 		let buf = self.receiver.try_iter().flatten().collect::<Vec<u8>>();
 		if let Err(write_all_error) = self.connection.write_all(&buf) {
 			tracing::warn!("write_all error: {write_all_error}");
-			if let Err(error) = self.error_sender.send(write_all_error) {
+			if let Err(error) = self.error_sender.send(write_all_error.into()) {
 				tracing::error!("mpsc send error: {error}");
 			}
 			self.halt = true;
@@ -64,7 +64,7 @@ impl Engine {
 		}
 		if let Err(flush_error) = self.connection.flush() {
 			tracing::warn!("flush error: {flush_error}");
-			if let Err(error) = self.error_sender.send(flush_error) {
+			if let Err(error) = self.error_sender.send(flush_error.into()) {
 				tracing::error!("mpsc send error: {error}");
 			}
 			self.halt = true;
