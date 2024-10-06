@@ -86,7 +86,7 @@ use crate::types::{
 		#[must_use]
 		/// Check if the connection to the board has been successfully established
 		pub fn is_ready(&self) -> bool {
-			self.initial_messages_sent && !self.pins.is_empty()
+			self.initial_messages_sent && !self.pins.is_empty() && self.connection_wrapper.is_active()
 		}
 
 		#[must_use]

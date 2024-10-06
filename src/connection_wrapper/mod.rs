@@ -45,6 +45,12 @@ impl ConnectionWrapper {
 }
 
 impl ConnectionWrapper {
+	pub fn is_active(&self) -> bool {
+		!self.thread_handle.is_finished()
+	}
+}
+
+impl ConnectionWrapper {
 	#[tracing::instrument(skip(self), err, ret, level = "DEBUG")]
 	pub fn write(&mut self, buf:Vec<u8>) -> Result<()> {
 		let mut errors = self.error_receiver.try_iter().collect::<Vec<IOError>>();
