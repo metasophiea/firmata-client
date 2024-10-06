@@ -6,6 +6,8 @@ authors = ["Brandon Walsh <metasophiea@gmail.com>"]
 readme = "README.md"
 description = "A Firmata protocol client library."
 edition = "2021"
+repository = "https://github.com/metasophiea/firmata-client"
+keywords = ["firmata", "arduino", "robot", "microcontroller"]
 
 [dependencies]
 serialport = "4.5.1"
