@@ -7,12 +7,15 @@ use serialport::{
 
 use crate::types::{Error, Result};
 
+use super::Command;
+
 pub struct Engine {
 	//loop control
 		halt: bool,
 
     //communication
 		receiver: std::sync::mpsc::Receiver<Vec<u8>>,
+		command_receiver: std::sync::mpsc::Receiver<Command>,
 		sender: std::sync::mpsc::Sender<Vec<u8>>,
 		error_sender: std::sync::mpsc::Sender<Error>,
 
@@ -23,6 +26,7 @@ pub struct Engine {
 impl Engine {
 	pub fn new(
 		receiver: std::sync::mpsc::Receiver<Vec<u8>>,
+		command_receiver: std::sync::mpsc::Receiver<Command>,
 		sender: std::sync::mpsc::Sender<Vec<u8>>,
 		error_sender: std::sync::mpsc::Sender<Error>,
 		serial_port_builder: SerialPortBuilder,
@@ -36,6 +40,7 @@ impl Engine {
 				halt: false,
 
 				receiver,
+				command_receiver,
 				sender,
 				error_sender,
 
@@ -53,6 +58,15 @@ impl Engine {
 impl Engine {
 	#[tracing::instrument(skip(self), level = "DEBUG")]
 	fn revolution(&mut self) {
+		for command in self.command_receiver.try_iter() {
+			match command {
+				Command::Halt => {
+					self.halt = true;
+					return;
+				}
+			}
+		}
+
 		let buf = self.receiver.try_iter().flatten().collect::<Vec<u8>>();
 		if let Err(write_all_error) = self.connection.write_all(&buf) {
 			tracing::warn!("write_all error: {write_all_error}");

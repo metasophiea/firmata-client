@@ -5,7 +5,7 @@ use serialport::*;
 fn main() {
     tracing_subscriber::fmt::init();
 
-	let serial_port_builder = serialport::new("/dev/tty.usbmodem14301", 57_600)
+	let serial_port_builder = serialport::new("/dev/tty.usbmodem14201", 57_600)
 		.data_bits(DataBits::Eight)
 		.parity(Parity::None)
 		.stop_bits(StopBits::One)
@@ -19,7 +19,7 @@ fn main() {
 	}
 	println!("setup complete");
 
-	let pin = 15;
+	let pin = 13;
     board.set_pin_mode(pin, firmata_client::PIN_MODE_OUTPUT).expect("pin mode set");
 
     let mut state = false;

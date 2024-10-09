@@ -2,6 +2,8 @@ use std::sync::mpsc::SendError;
 
 use serialport::Error as SerialPortError;
 
+use super::super::connection_wrapper::Command;
+
 /// Firmata error type.
 #[derive(Debug)]
 pub enum Error {
@@ -15,8 +17,10 @@ pub enum Error {
     StdIo(std::io::Error),
     /// UTF8 error
     Utf8(std::str::Utf8Error),
-	/// Mpsc `SendError`
-	MpscSend(SendError<Vec<u8>>),
+	/// Mpsc Buf `SendError`
+	MpscBufSend(SendError<Vec<u8>>),
+	/// Mpsc Command `SendError`
+	MpscCommandSend(SendError<Command>),
 	/// Invalid Pin Mode
 	InvalidPinMode { pin: u8, modes: Vec<u8> },
     /// Pin out of bounds
@@ -35,7 +39,7 @@ impl Error {
 	}
 }
 
-impl std::fmt::Display for Error  {
+impl std::fmt::Display for Error {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Error::Disconnected => write!(f, "Disconnected"),
@@ -43,7 +47,8 @@ impl std::fmt::Display for Error  {
 			Error::BadByte(byte) => write!(f, "Received a bad byte: {byte}"),
 			Error::StdIo(error) => write!(f, "I/O error: {error}"),
 			Error::Utf8(error) => write!(f, "UTF8 error: {error}"),
-			Error::MpscSend(error) => write!(f, "Mpsc SendError error: {error}"),
+			Error::MpscBufSend(error) => write!(f, "Mpsc Buf SendError error: {error}"),
+			Error::MpscCommandSend(error) => write!(f, "Mpsc Command SendError error: {error}"),
 			Error::InvalidPinMode { pin, modes } => write!(f, "Invalid Pin Mode: {pin} modes: {modes:?}"),
 			Error::PinOutOfBounds { pin, len, source } => write!(f, "Pin out of bounds: {pin} ({len}) source: {source}"),
 			Error::Serialport(error) => write!(f, "Serialport Error: {error}"),
@@ -65,7 +70,13 @@ impl From<std::str::Utf8Error> for Error {
 
 impl From<SendError<Vec<u8>>> for Error {
     fn from(error: SendError<Vec<u8>>) -> Self {
-        Error::MpscSend(error)
+        Error::MpscBufSend(error)
+    }
+}
+
+impl From<SendError<Command>> for Error {
+    fn from(error: SendError<Command>) -> Self {
+        Error::MpscCommandSend(error)
     }
 }
 

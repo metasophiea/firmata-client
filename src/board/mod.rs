@@ -60,6 +60,13 @@ use crate::types::{
 		}
 	}
 
+// disconnect
+	impl Board {
+		pub fn disconnect(&mut self) -> Result<()> {
+			self.connection_wrapper.disconnect()
+		}
+	}
+
 // tools
 	impl Board {
 		/// Write on the internal connection.

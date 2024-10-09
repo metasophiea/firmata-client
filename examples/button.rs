@@ -20,7 +20,7 @@ fn main() {
 	}
 	println!("setup complete");
 
-    let led = 5;
+    let led = 13;
     let button = 2;
 	
     board.report_digital(button, true).expect("digital reporting mode");
