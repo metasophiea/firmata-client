@@ -5,6 +5,11 @@ use serialport::{
 	SerialPortBuilder
 };
 
+use crate::constants::{
+    END_SYSEX,
+    REPORT_FIRMWARE,
+    START_SYSEX
+};
 use crate::types::{Error, Result};
 
 use super::Command;
@@ -31,9 +36,12 @@ impl Engine {
 		error_sender: std::sync::mpsc::Sender<Error>,
 		serial_port_builder: SerialPortBuilder,
 	) -> Result<Engine> {
-		let connection = serial_port_builder
+		let mut connection = serial_port_builder
 			.timeout(std::time::Duration::from_millis(1))
 			.open()?;
+
+		connection.write_all(&[START_SYSEX, REPORT_FIRMWARE, END_SYSEX])?;
+		connection.flush()?;
 
 		Ok(
 			Engine {
