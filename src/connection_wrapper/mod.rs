@@ -74,7 +74,11 @@ impl ConnectionWrapper {
 	pub fn write(&mut self, buf:Vec<u8>) -> Result<()> {
 		let mut errors = self.error_receiver.try_iter().collect::<Vec<Error>>();
 		if !errors.is_empty() {
-			return Err( errors.swap_remove(0) );
+			if errors.len() == 1 {
+				return Err( errors.swap_remove(0) );
+			} else {
+				return Err(Error::Multiple(errors));
+			}
 		}
 
 		if self.thread_handle.is_finished() {
@@ -89,7 +93,11 @@ impl ConnectionWrapper {
 	pub fn poll(&self) -> Result<Vec<u8>> {
 		let mut errors = self.error_receiver.try_iter().collect::<Vec<Error>>();
 		if !errors.is_empty() {
-			return Err( errors.swap_remove(0) );
+			if errors.len() == 1 {
+				return Err( errors.swap_remove(0) );
+			} else {
+				return Err(Error::Multiple(errors));
+			}
 		}
 
 		if self.thread_handle.is_finished() {

@@ -203,12 +203,14 @@ impl Board {
 							let Some(minor) = sysex_buffer.get(3) else { break; };
 							tracing::debug!("major: {major} minor: {minor}");
 
-							self.firmware_version = Some(format!("{major:o}.{minor:o}"));
+							let firmware_version = format!("{major:o}.{minor:o}");
+							messages.push(Message::ReportFirmwareVersion(firmware_version.clone()));
+							self.firmware_version = Some(firmware_version);
 
 							if sysex_buffer.len() - 1 > 4 {
 								let name = std::str::from_utf8(&sysex_buffer[4..sysex_buffer.len() - 1])?.to_string();
 								tracing::debug!("firmware_name: {name}");
-								messages.push(Message::ReportFirmware(name.clone()));
+								messages.push(Message::ReportFirmwareName(name.clone()));
 								self.firmware_name = Some(name);
 							}
 						},
@@ -280,7 +282,7 @@ impl Board {
 
 					self.buffer.drain(0..sysex_buffer.len());
 				},
-				_ => { return Err(Error::BadByte(self.buffer[0])); },
+				_ => { return Err(Error::BadByte( self.buffer.remove(0))); },
 			}
 		}
 

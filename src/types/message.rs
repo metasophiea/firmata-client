@@ -8,7 +8,8 @@ pub enum Message {
     AnalogMappingResponse,
     CapabilityResponse,
     PinStateResponse,
-    ReportFirmware(String),
+    ReportFirmwareName(String),
+    ReportFirmwareVersion(String),
     I2CReply,
 }
 

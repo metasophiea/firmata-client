@@ -1,6 +1,6 @@
 [package]
 name = "firmata-client"
-version = "0.6.1"
+version = "0.7.0"
 license = "MIT OR Apache-2.0"
 authors = ["Brandon Walsh <metasophiea@gmail.com>"]
 readme = "README.md"
@@ -10,7 +10,7 @@ repository = "https://github.com/metasophiea/firmata-client"
 keywords = ["firmata", "arduino", "robot", "microcontroller"]
 
 [dependencies]
-serialport = "4.5.1"
+serialport = "4.6.0"
 tracing = "0.1.40"
 
 [dev-dependencies]

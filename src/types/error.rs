@@ -7,6 +7,9 @@ use super::super::connection_wrapper::Command;
 /// Firmata error type.
 #[derive(Debug)]
 pub enum Error {
+	/// Many errors put together
+	Multiple(Vec<Error>),
+
 	/// There is no connection to the board 
 	Disconnected,
     /// Unknown `SysEx` code
@@ -42,6 +45,8 @@ impl Error {
 impl std::fmt::Display for Error {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
+			Error::Multiple(errors) => write!(f, "Multiple: {errors:?}"),
+
 			Error::Disconnected => write!(f, "Disconnected"),
 			Error::UnknownSysEx { code } => write!(f, "Unknown `SysEx` code: {code}"),
 			Error::BadByte(byte) => write!(f, "Received a bad byte: {byte}"),
